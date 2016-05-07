@@ -39,9 +39,13 @@ func (cli *DockerCli) CmdUpdate(args ...string) error {
 	var err error
 	var flMemory int64
 	if *flMemoryString != "" {
-		flMemory, err = units.RAMInBytes(*flMemoryString)
-		if err != nil {
-			return err
+		if *flMemoryString == "-1" {
+			flMemory = -1
+		} else {
+			flMemory, err = units.RAMInBytes(*flMemoryString)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

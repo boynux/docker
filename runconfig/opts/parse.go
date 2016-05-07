@@ -163,7 +163,7 @@ func Parse(cmd *flag.FlagSet, args []string) (*container.Config, *container.Host
 	var err error
 
 	var flMemory int64
-	if *flMemoryString != "" {
+	if *flMemoryString != "" && *flMemoryString != "-1" {
 		flMemory, err = units.RAMInBytes(*flMemoryString)
 		if err != nil {
 			return nil, nil, nil, cmd, err
