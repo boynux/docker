@@ -213,5 +213,16 @@ func (s *DockerSuite) TestUpdateStats(c *check.C) {
 	curMemLimit := getMemLimit(name)
 
 	c.Assert(preMemLimit, checker.Equals, curMemLimit)
+}
 
+func (s *DockerSuite) TestUpdateMemoryToZero(c *check.C) {
+	testRequires(c, DaemonIsLinux)
+
+	name := "test-update-memory"
+	dockerCmd(c, "create", "--name", name, "--memory", "50M", "busybox")
+	_, _, err := dockerCmdWithError("update", "--memory", "-1", name)
+
+	c.Assert(err, check.IsNil)
+	// Update memory to zero for a created container should set memory limit to zero
+	c.Assert(inspectField(c, name, "HostConfig.Memory"), checker.Equals, "-1")
 }
