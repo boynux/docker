@@ -215,7 +215,7 @@ func (s *DockerSuite) TestUpdateStats(c *check.C) {
 	c.Assert(preMemLimit, checker.Equals, curMemLimit)
 }
 
-func (s *DockerSuite) TestUpdateMemoryToZero(c *check.C) {
+func (s *DockerSuite) TestUpdateMemoryToUnlimited(c *check.C) {
 	testRequires(c, DaemonIsLinux)
 
 	name := "test-update-memory"
@@ -223,6 +223,36 @@ func (s *DockerSuite) TestUpdateMemoryToZero(c *check.C) {
 	_, _, err := dockerCmdWithError("update", "--memory", "-1", name)
 
 	c.Assert(err, check.IsNil)
-	// Update memory to zero for a created container should set memory limit to zero
+
 	c.Assert(inspectField(c, name, "HostConfig.Memory"), checker.Equals, "-1")
+}
+
+func (s *DockerSuite) TestUpdateRunningMemoryToUnlimited(c *check.C) {
+	testRequires(c, DaemonIsLinux)
+
+	name := "test-update-memory"
+	dockerCmd(c, "run", "-d", "--name", name, "--memory", "50M", "busybox")
+
+	c.Assert(waitRun(name), checker.IsNil)
+
+	getMemLimit := func(id string) uint64 {
+		resp, body, err := sockRequestRaw("GET", fmt.Sprintf("/containers/%s/stats?stream=false", id), nil, "")
+		c.Assert(err, checker.IsNil)
+		c.Assert(resp.Header.Get("Content-Type"), checker.Equals, "application/json")
+
+		var v *types.Stats
+		err = json.NewDecoder(body).Decode(&v)
+		c.Assert(err, checker.IsNil)
+		body.Close()
+
+		return v.MemoryStats.Limit
+	}
+
+	preMemLimit := getMemLimit(name)
+
+	dockerCmd(c, "update", "--memory", "-1", name)
+
+	curMemLimit := getMemLimit(name)
+
+	c.Assert(preMemLimit, checker.Not(checker.Equals), curMemLimit)
 }
