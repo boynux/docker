@@ -231,7 +231,7 @@ func (s *DockerSuite) TestUpdateRunningMemoryToUnlimited(c *check.C) {
 	testRequires(c, DaemonIsLinux)
 
 	name := "test-update-memory"
-	dockerCmd(c, "run", "-d", "--name", name, "--memory", "50M", "busybox")
+	dockerCmd(c, "run", "-d", "-ti", "--name", name, "--memory", "50M", "busybox")
 
 	c.Assert(waitRun(name), checker.IsNil)
 
